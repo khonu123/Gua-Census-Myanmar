@@ -38,7 +38,7 @@
 
     <script type="text/babel" data-type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const { useState, useEffect, useMemo, useRef } = window.React;
@@ -344,44 +344,24 @@
             }
           };
 
-          const handleAdminLogin = (e) => {
-            e.preventDefault();
-            
-            const storedId = localStorage.getItem('adminId_domestic') || 'admin';
-            const storedPass = localStorage.getItem('adminPass_domestic') || 'gcmm123';
-
-            // CRITICAL: Force bypass local storage mismatch or Firebase auth failures if hard defaults are typed correctly
-            if ((adminIdInput.trim() === 'admin' && adminPassInput.trim() === 'gcmm123') || 
-                (adminIdInput.trim() === storedId && adminPassInput.trim() === storedPass)) {
-              
-              setErrorMessage("");
-              setView('adminDash');
-              fetchAdminData();
-            } else {
-              setErrorMessage("ID သို့မဟုတ် စကားဝှက် မှားယွင်းနေပါသည်။");
-              setTimeout(() => setErrorMessage(""), 3000);
-            }
-          };
-
-          const handleChangeCredentials = (e) => {
-            e.preventDefault();
-            if (!newAdminId || !newAdminPass) return;
-            
-            localStorage.setItem('adminId_domestic', newAdminId);
-            localStorage.setItem('adminPass_domestic', newAdminPass);
-            
-            setShowSettings(false);
-            setNewAdminId('');
-            setNewAdminPass('');
-            setShowNewPassword(false);
-            
-            setAdminIdInput('');
-            setAdminPassInput('');
-            setView('adminAuth');
-            
-            setErrorMessage("ID နှင့် Password အသစ် ပြောင်းလဲပြီးပါပြီ။ ကျေးဇူးပြု၍ အသစ်ဖြင့် ပြန်လည်ဝင်ရောက်ပါ။");
-            setTimeout(() => setErrorMessage(""), 5000);
-          };
+        const handleAdminLogin = async (e) => {
+        e.preventDefault();
+        setErrorMessage("");
+        try {
+            await signInWithEmailAndPassword(auth, adminIdInput.trim(), adminPassInput);
+            setView('adminDash');
+            fetchAdminData();
+        } catch (error) {
+            console.error("Admin Login Error:", error);
+            setErrorMessage("ID သို့မဟုတ် Password မှားနေပါသည်။");
+            setTimeout(() => setErrorMessage(""), 3000);
+        }
+    };
+         const handleChangeCredentials = (e) => {
+        e.preventDefault();
+        setErrorMessage("Password ပြောင်းလဲရန် Firebase Console > Authentication > Users မှတစ်ဆင့်သာ ပြုလုပ်နိုင်ပါသည်။");
+        setTimeout(() => setErrorMessage(""), 5000);
+    };
 
           const fetchAdminData = async () => {
             const colRef = getCensusCollection();
